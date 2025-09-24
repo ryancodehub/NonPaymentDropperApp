@@ -1,0 +1,57 @@
+﻿<Window x:Class="NonPaymentDropper.Login"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NonPaymentDropper"
+        mc:Ignorable="d" FontSize="20" FontFamily="Segoe UI"
+        WindowStartupLocation="CenterScreen"
+        Title="Login" Height="250" Width="450">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="auto" />
+            <ColumnDefinition Width="auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4"
+                   Text="LSUA Login" Margin="5" Padding="5"
+                   HorizontalAlignment="Center" FontSize="32" />
+
+        <TextBlock Grid.Row="1" Grid.Column="1"
+                   Text="Username: " Margin="5" Padding="5"/>
+        <TextBox Grid.Row="1" Grid.Column="2" Width="300"
+                 x:Name="usernameText" Margin="5" Padding="5"
+                 TabIndex="0" />
+
+        <TextBlock Grid.Row="2" Grid.Column="1"
+                   Text="Password: " Margin="5" Padding="5"/>
+        <PasswordBox Grid.Row="2" Grid.Column="2" Width="300"
+                     x:Name="passwordText" Margin="5" Padding="5"
+                     TabIndex="1"/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
+                    Grid.Row="3" Grid.Column="2">
+            <Button x:Name="authenticateUser" Margin="5" Padding="5"
+                    MinWidth="100" IsDefault="True" TabIndex="2"
+                    Click="AuthenticateUser_OnClick">
+                Login
+            </Button>
+            <Button x:Name="exitApplication" Margin="5" Padding="5"
+                    MinWidth="100" TabIndex="3"
+                    Click="ExitApplication_OnClick">
+                Exit
+            </Button>
+        </StackPanel>
+    </Grid>
+</Window>
+

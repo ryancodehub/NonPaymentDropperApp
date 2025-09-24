@@ -1,0 +1,16 @@
+﻿/* Style for tags */
+.variable {
+    color: purple;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: 0 2px;
+    font-size: 120%;
+    font-family: monospace;
+}
+
+/* Style for hovering tags */
+.variable:hover {
+    background-color: #f0f0f0;
+    cursor: pointer;
+}

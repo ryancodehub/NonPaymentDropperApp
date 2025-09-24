@@ -1,0 +1,544 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Email Editor</title>
+    <script src="{{TINYMCE_JS}}"></script>
+    <!--<script>
+        window.availableVariables = {{VARIABLES_JSON}};
+    </script>-->
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .tox-tinymce {
+            height: 100% !important;
+            width: 100% !important;
+        }
+
+        #editor {
+            width: 100%;
+            height: 100%;
+        }
+
+        .tox-edit-area iframe {
+            overflow-y: auto !important;
+        }
+    </style>
+    <script>
+        let currentTemplateId = null;
+        let currentTemplateName = 'New Template';
+        window.availableVariables = [];
+        window.categories = [];
+        let currentCategoryName = 'Select Category';
+        let currentCategoryId = null;
+        let currentEmailSubject = '';
+
+        window.updateAvailableVariables = function (tags) {
+            window.availableVariables = tags;
+        };
+
+        window.populateCategories = function (cats) {
+            window.categories = cats;
+
+            if (categories.length === 1) {
+                currentCategoryId = categories[0].Id;
+                currentCategoryName = categories[0].CategoryName;
+                if (window.categoryButtonApi) {
+                    window.categoryButtonApi.setText(currentCategoryName);
+                }
+
+                if (window.chrome?.webview?.hostObjects?.csHandler?.LoadTagsForCategory) {
+                    window.chrome.webview.hostObjects.csHandler.LoadTagsForCategory(currentCategoryId);
+                }
+            }
+        };
+
+
+        function openSaveTemplateDialog(editor) {
+            editor.windowManager.open({
+                title: 'Save New Template',
+                body: {
+                    type: 'panel',
+                    items: [
+                        {
+                            type: 'input',
+                            name: 'templateName',
+                            label: 'Template Name',
+                            value: ''
+                        },
+                        {
+                            type: 'input',
+                            name: 'emailSubject',
+                            label: 'Email Subject',
+                            value: ''
+                        }
+                    ]
+                },
+                buttons: [
+                    { type: 'cancel', text: 'Cancel' },
+                    { type: 'submit', text: 'Save', primary: true }
+                ],
+                onSubmit: function (api) {
+                    const data = api.getData();
+                    const templateName = data.templateName;
+                    const emailSubject = data.emailSubject;
+                    const templateContent = editor.getContent();
+
+                    if (!currentCategoryId) {
+                        alert('Please select a category before saving a template.');
+                        return;
+                    }
+
+                    // Call into C# with both name + html
+                    if (window.chrome && window.chrome.webview && window.chrome.webview.hostObjects.csHandler) {
+                        const result = window.chrome.webview.hostObjects.csHandler.SaveTemplate(
+                            templateName,
+                            templateContent,
+                            currentCategoryId,
+                            emailSubject
+                        );
+                    }
+
+                    currentEmailSubject = emailSubject;
+
+                    api.close();
+                }
+            });
+        }
+
+        function openUpdateTemplateDialog(editor) {
+            editor.windowManager.open({
+                title: `Update Template: ${currentTemplateName}`,
+                body: {
+                    type: 'panel',
+                    items: [
+                        {
+                            type: 'htmlpanel',
+                            html: `<p><strong>${currentTemplateName}</strong></p>`
+                        },
+                        {
+                            type: 'input',
+                            name: 'emailSubject',
+                            label: 'Email Subject'
+                        }
+                    ]
+                },
+                buttons: [
+                    { type: 'cancel', text: 'Cancel' },
+                    { type: 'submit', text: 'Save', primary: true }
+                ],
+                initialData: {
+                    emailSubject: currentEmailSubject || ''
+                },
+                onSubmit: function (api) {
+                    const data = api.getData();
+                    const emailSubject = data.emailSubject;
+                    console.log(data.emailSubject);
+                    const templateContent = editor.getContent();
+
+                    // Call into C# update method
+                    if (window.chrome && window.chrome.webview && window.chrome.webview.hostObjects.csHandler) {
+                        window.chrome.webview.hostObjects.csHandler.UpdateTemplate(
+                            currentTemplateId.toString(),
+                            templateContent,
+                            emailSubject
+                        );
+                    }
+
+                    currentEmailSubject = emailSubject;
+                    api.close();
+                }
+            });
+        }
+
+        function openLoadTemplateDialog() {
+            if (window.chrome && window.chrome.webview && window.chrome.webview.hostObjects.csHandler) {
+                window.chrome.webview.hostObjects.csHandler.LoadTemplate();
+            }
+        }
+
+        tinymce.init({
+            selector: '#editor',
+            content_css: '{{CONTENT_CSS}}',
+            license_key: 'gpl',
+            promotion: false,
+            branding: false,
+            menu: {
+                file: { title: 'File', items: 'newdocument | save_template update_template load_template archive_template | print' }
+            },
+            placeholder: "Email Template Editor - Type your template here...",
+            plugins: 'lists link autolink code image table preview emoticons wordcount',
+            contextmenu: 'link linkchecker image editimage table spellchecker configurepermanentpen insertEmail emoticons | variablesMenu',
+            toolbar: 'newdocument save update load | undo redo | bold italic underline strikethrough | forecolor backcolor | fontfamily fontsize | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | blocks | link image table | preview | categories variables',
+            setup: function (editor) {
+                // Add a dropdown for variables
+                editor.ui.registry.addMenuButton('variables', {
+                    text: 'Insert Variable',
+                    icon: 'addtag',
+                    fetch: function (callback) {
+                        const items = window.availableVariables.map(v => ({
+                            type: 'menuitem',
+                            text: v.Name,
+                            onAction: function () {
+                                editor.insertContent(
+                                    `<span class="variable" contenteditable="false">${v.Tag}</span>`
+                                );
+                            }
+                        }));
+                        callback(items);
+                    }
+                });
+
+                editor.ui.registry.addMenuButton('categories', {
+                    text: currentCategoryName,
+                    tooltip: 'Select Category',
+                    fetch: function (callback) {
+                        const items = (window.categories || []).map(c => ({
+                            type: 'menuitem',
+                            text: c.CategoryName,
+                            onAction: function () {
+                                currentCategoryId = c.Id;
+                                currentCategoryName = c.CategoryName;
+
+                                // Use the API to update the toolbar button text
+                                if (window.categoryButtonApi) {
+                                    window.categoryButtonApi.setText(currentCategoryName);
+                                }
+
+                                // Call backend to load tags for this category
+                                if (window.chrome?.webview?.hostObjects?.csHandler?.LoadTagsForCategory) {
+                                    window.chrome.webview.hostObjects.csHandler.LoadTagsForCategory(c.Id);
+                                }
+                            }
+                        }));
+                        callback(items);
+                    },
+                    onSetup: function (api) {
+                        // Save the API so we can call setText later
+                        window.categoryButtonApi = api;
+                        api.setText(currentCategoryName);
+                        return function () {};
+                    }
+                });
+
+                editor.addCommand('mceNewDocument', function () {
+                    setCurrentTemplate(null, null, null);
+                    editor.setContent('');
+                });
+
+                // Toolbar button
+                editor.ui.registry.addButton('save', {
+                    icon: 'save',
+                    tooltip: 'Save Template',
+                    onAction: function () {
+                        openSaveTemplateDialog(editor, function () {
+                            editor.execCommand('mceNewDocument');
+                        });
+                    }
+                });
+
+                editor.ui.registry.addButton('load', {
+                    icon: 'upload',
+                    tooltip: 'Load Existing Template',
+                    onAction: function () {
+                        openLoadTemplateDialog();
+                    }
+                });
+
+                editor.ui.registry.addButton('update', {
+                    icon: 'template-add',
+                    tooltip: 'Update Current Template',
+                    onAction: function () {
+                        if (currentTemplateId) {
+                            openUpdateTemplateDialog(editor);
+                        }
+                    },
+                    onSetup: function (api) {
+                        api.setEnabled(false);
+                        window.updateTemplateButtonApi = api;
+                        return function () {};
+                    }
+                });
+
+                // Add context menu for variables
+                editor.ui.registry.addContextMenu('variablesMenu', {
+                    update: function () {
+                        return window.availableVariables.map(v => ({
+                            type: 'menuitem',
+                            icon: 'addtag',
+                            text: 'Insert ' + v.Name,
+                            onAction: function () {
+                                editor.insertContent(
+                                    `<span class="variable" contenteditable="false">${v.Tag}</span>`
+                                );
+                            }
+                        }));
+                    }
+                });
+
+                editor.ui.registry.addIcon('email', `
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                `);
+
+                // Add insert email context menu
+                editor.ui.registry.addMenuItem('insertEmail', {
+                    text: 'Insert User Email',
+                    icon: 'email',
+                    onAction: function () {
+                        editor.windowManager.open({
+                            title: 'Insert Email Address',
+                            body: {
+                                type: 'panel',
+                                items: [
+                                    {
+                                        type: 'input',
+                                        name: 'email',
+                                        label: 'Email'
+                                    }
+                                ]
+                            },
+                            buttons: [
+                                { type: 'cancel', text: 'Close' },
+                                { type: 'submit', text: 'Insert', primary: true }
+                            ],
+                            onSubmit: function (api) {
+                                const data = api.getData();
+                                editor.insertContent(
+                                    `<a href="mailto:${data.email}">${data.email}</a>`
+                                );
+                                api.close();
+                            }
+                        })
+                    }
+                });
+
+                editor.ui.registry.addMenuItem('save_template', {
+                    text: 'Save Template',
+                    icon: 'save',
+                    onAction: function () {
+                        openSaveTemplateDialog(editor);
+                    }
+                });
+
+                editor.ui.registry.addMenuItem('update_template', {
+                    text: 'Update Current Template',
+                    onAction: function () {
+                        if (currentTemplateId) {
+                            openUpdateTemplateDialog(editor);
+                        }
+                    },
+                    onSetup: function (api) {
+                        api.setEnabled(currentTemplateId !== null);
+                        window.updateTemplateMenuApi = api;
+                        return function () {};
+                    }
+                });
+
+                editor.ui.registry.addMenuItem('archive_template', {
+                    text: 'Archive',
+                    icon: 'folder',
+                    tooltip: 'Archive Current Template',
+                    onAction: function () {
+                        if (!currentTemplateId) {
+                            editor.windowManager.alert('No template loaded to archive.');
+                            return;
+                        }
+
+                        // Confirm with the user
+                        editor.windowManager.confirm(`Are you sure you want to archive <strong>${currentTemplateName}</strong>`, function (state) {
+                            if (state) {
+                                if (window.chrome?.webview?.hostObjects?.csHandler) {
+                                    window.chrome.webview.hostObjects.csHandler.ArchiveTemplate(currentTemplateId.toString());
+                                }
+
+                                // Clear the editor and reset state
+                                editor.setContent('');
+                                setCurrentTemplate(null, null, null);
+                            }
+                        });
+                    },
+                    onSetup: function (api) {
+                        api.setEnabled(currentTemplateId !== null);
+                        window.updateTemplateMenuApi = api;
+                        return function () { };
+                    }
+                });
+
+                function setCurrentTemplate(id, name, subject) {
+                    currentTemplateId = id;
+                    currentTemplateName = name ? name : 'New Template';
+                    currentEmailSubject = subject || '';
+
+                    if (window.updateTemplateMenuApi) {
+                        window.updateTemplateMenuApi.setEnabled(!!id);
+                    }
+
+                    if (window.updateTemplateButtonApi) {
+                        window.updateTemplateButtonApi.setEnabled(!!id);
+                    }
+
+                    window.chrome.webview.postMessage(`"${currentTemplateName}"`);
+                }
+
+                editor.ui.registry.addMenuItem('load_template', {
+                    text: 'Load Template',
+                    icon: 'upload',
+                    onAction: function () {
+                        openLoadTemplateDialog();
+                    }
+                });
+
+                window.showTemplatePicker = function (templates) {
+                    // Build a list of unique categories with Id and Name
+                    const categoryMap = {};
+                    templates.forEach(t => {
+                        if (!categoryMap[t.CategoryId]) {
+                            categoryMap[t.CategoryId] = t.CategoryName;
+                        }
+                    });
+
+                    const categories = Object.keys(categoryMap).map(id => ({
+                        value: id,
+                        text: categoryMap[id]
+                    }));
+
+                    // First, pick a category
+                    editor.windowManager.open({
+                        title: 'Choose a Category',
+                        body: {
+                            type: 'panel',
+                            items: [
+                                {
+                                    type: 'htmlpanel',
+                                    html: '<p>Please select a category to filter the available templates:</p>'
+                                },
+                                {
+                                    type: 'selectbox',
+                                    name: 'category',
+                                    label: 'Category',
+                                    items: categories
+                                }
+                            ]
+                        },
+                        buttons: [
+                            { type: 'cancel', text: 'Cancel' },
+                            { type: 'submit', text: 'Next', primary: true }
+                        ],
+                        onSubmit: function (api) {
+                            const data = api.getData();
+                            const selectedCategoryId = data.category;
+                            const selectedCategoryName = categoryMap[selectedCategoryId];
+
+                            // Filter templates
+                            const filteredTemplates = templates.filter(t => t.CategoryId === selectedCategoryId);
+
+                            api.close();
+
+                            // Open the template picker dialog for this category
+                            editor.windowManager.open({
+                                title: 'Choose a Template',
+                                body: {
+                                    type: 'panel',
+                                    items: [
+                                        {
+                                            type: 'htmlpanel',
+                                            html: `<p>Select a template from the chosen category: <strong>${selectedCategoryName}</strong></p>`
+                                        },
+                                        {
+                                            type: 'selectbox',
+                                            name: 'template',
+                                            label: 'Templates',
+                                            items: filteredTemplates.map(t => ({
+                                                text: t.TemplateName,
+                                                value: t.Id
+                                            }))
+                                        }
+                                    ]
+                                },
+                                buttons: [
+                                    { type: 'cancel', text: 'Cancel' },
+                                    { type: 'submit', text: 'Load', primary: true }
+                                ],
+                                onSubmit: function (api) {
+                                    const data = api.getData();
+                                    const selectedTemplateId = data.template;
+
+                                    const selectedTemplate = filteredTemplates.find(t => t.Id === selectedTemplateId);
+
+                                    if (selectedTemplate) {
+                                        editor.setContent(selectedTemplate.TemplateHtml);
+                                        setCurrentTemplate(selectedTemplate.Id, selectedTemplate.TemplateName, selectedTemplate.EmailSubjectText);
+                                        api.close();
+                                    }
+                                }
+                            })
+                        }
+                    });
+                };
+
+
+                editor.on('init', function () {
+                    if (window.chrome?.webview?.hostObjects?.csHandler) {
+                        window.chrome.webview.hostObjects.csHandler.LoadCategories();
+                    }
+
+                    const container = editor.getContainer();
+
+                    const brandingDiv = document.createElement('div');
+                    brandingDiv.style.cssText = `
+                            text-align: center;
+                            background-color: #4B2E83;
+                            color: #FFD200;
+                            font-family: Arial, sans-serif;
+                            font-size: 12px;
+                            padding: 4px;
+                        `;
+                    brandingDiv.innerText = 'LSU - Alexandria © 2025';
+
+                    container.appendChild(brandingDiv);
+                });
+            }
+        });
+
+        function showSaveResult(message) {
+            tinymce.activeEditor.windowManager.open({
+                title: "Save Result",
+                body: {
+                    type: "panel",
+                    items: [{ type: "htmlpanel", html: `<p>${message}</p>` }]
+                },
+                buttons: [
+                    { type: "cancel", text: "Close" }
+                ]
+            });
+        }
+
+        function setCurrentEditorTemplate(id, name) {
+            currentTemplateId = id;
+            currentTemplateName = name ? name : 'New Template';
+
+            if (window.updateTemplateMenuApi) {
+                window.updateTemplateMenuApi.setEnabled(!!id);
+            }
+
+            if (window.updateTemplateButtonApi) {
+                window.updateTemplateButtonApi.setEnabled(!!id);
+            }
+
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage(`"${currentTemplateName}"`);
+            }
+        }
+    </script>
+</head>
+<body>
+<textarea id="editor"></textarea>
+</body>
+</html>

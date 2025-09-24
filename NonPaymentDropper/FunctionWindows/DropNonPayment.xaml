@@ -1,0 +1,182 @@
+﻿<Window x:Class="NonPaymentDropper.FunctionWindows.DropNonPayment"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NonPaymentDropper.FunctionWindows"
+        mc:Ignorable="d" FontSize="20" FontFamily="Segoe UI"
+        WindowStartupLocation="CenterScreen"
+        Title="Drop Non Payment" Height="950" Width="800">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5"
+                   Text="Drop For Non Payment" 
+                   Margin="5" Padding="5"
+                   HorizontalAlignment="Center" FontSize="32" />
+
+        <TextBox Grid.Row="1" Grid.Column="2"
+                 Margin="5" Padding="5"
+                 AcceptsReturn="True"
+                 IsReadOnly="True"
+                 Text="Instructions:&#10;
+                 No Headers&#10;
+                 Only PeopleCodeId"/>
+
+        <Label Grid.Row="2" Grid.Column="1"
+               Margin="5" Padding="5"
+               HorizontalAlignment="Right">
+            Upload File:
+        </Label>
+        <TextBox Grid.Row="2" Grid.Column="2" Width="400"
+                 x:Name="FilePathTb" Margin="5" Padding="5"
+                 IsReadOnly="True" />
+        <Button Grid.Row="2" Grid.Column="3"
+                Margin="5" Padding="5"
+                x:Name="BrowseBtn"
+                Click="BrowseBtn_OnClick">
+            Browse
+        </Button>
+
+        <Label Grid.Row="3" Grid.Column="1"
+               Margin="5" Padding="5"
+               HorizontalAlignment="Right">
+            Academic Year:
+        </Label>
+        <!--<TextBox Grid.Row="3" Grid.Column="2"
+             Margin="5" Padding="5"
+             x:Name="YearTb"/>-->
+        <ComboBox Grid.Row="3" Grid.Column="2"
+                  Margin="5" Padding="5"
+                  x:Name="YearCmb"/>
+
+        <Label Grid.Row="4" Grid.Column="1"
+           Margin="5" Padding="5"
+           HorizontalAlignment="Right">
+            Academic Term:
+        </Label>
+        <!--<TextBox Grid.Row="4" Grid.Column="2"
+             Margin="5" Padding="5"
+             x:Name="TermTb"/>-->
+        <ComboBox Grid.Row="4" Grid.Column="2"
+                  Margin="5" Padding="5"
+                  x:Name="TermCmb"/>
+        <Label Grid.Row="5" Grid.Column="1"
+               Margin="5" Padding="5"
+               HorizontalAlignment="Right">
+            Academic Sessions:
+        </Label>
+        <!--<TextBox Grid.Row="5" Grid.Column="2"
+                 Margin="5" Padding="5"
+                 x:Name="SessionsTb"/>-->
+        <ListBox Grid.Row="5" Grid.Column="2"
+                 SelectionMode="Multiple"
+                 x:Name="SessionsLb"
+                 MaxHeight="175"
+                 Margin="5" Padding="5">
+        </ListBox>
+
+        <Label Grid.Row="6" Grid.Column="1"
+               Margin="5" Padding="5"
+               HorizontalAlignment="Right">
+            Run In Test:
+        </Label>
+        <CheckBox Grid.Row="6" Grid.Column="2"
+              Margin="34,19,5,5" Padding="5"
+              x:Name="RunInTestCb"
+              IsChecked="False" 
+              Checked="RunInTestCb_OnChecked"
+              Unchecked="RunInTestCb_OnUnchecked"/>
+
+        <Label Grid.Row="7" Grid.Column="1"
+               Margin="5" Padding="5"
+               HorizontalAlignment="Right"
+               x:Name="TextMessageLbl">
+            Text Message:
+        </Label>
+        <TextBox Grid.Row="7" Grid.Column="2"
+                 Margin="5" Padding="5"
+                 x:Name="TextMessageTb"
+                 AcceptsReturn="True"
+                 Height="100"
+                 Width="400"
+                 TextWrapping="Wrap"
+                 MaxLength="160"/>
+        <Button Grid.Row="7" Grid.Column="3"
+                Margin="5" Padding="5"
+                MaxHeight="50"
+                x:Name="TextTextingBtn"
+                Click="TextTextingBtn_OnClick">
+            Test Text
+        </Button>
+
+        <Label Grid.Row="8" Grid.Column="1"
+               Margin="5" Padding="5"
+               HorizontalAlignment="Right"
+               x:Name="SendEmailLbl">
+            Send Email:
+        </Label>
+        <CheckBox Grid.Row="8" Grid.Column="2"
+              Margin="34,19,5,5" Padding="5"
+              x:Name="SendEmailCb"
+              IsChecked="False"/>
+
+        <Label Grid.Row="9" Grid.Column="1"
+               Margin="5" Padding="5"
+               HorizontalAlignment="Right"
+               x:Name="SendEmailSelfLbl">
+            Send Email/Text To Self:
+        </Label>
+        <CheckBox Grid.Row="9" Grid.Column="2"
+                  Margin="34,19,5,5" Padding="5"
+                  x:Name="SendEmailToSelfCb"
+                  IsChecked="False"/>
+
+        <Label Grid.Row="10" Grid.Column="1"
+               Margin="5" Padding="5"
+               HorizontalAlignment="Right"
+               x:Name="EmailTemplateSelectLbl">
+            Email Template:
+        </Label>
+        <ComboBox Grid.Row="10" Grid.Column="2"
+                  Margin="5" Padding="5"
+                  x:Name="EmailTemplateSelectCmb"/>
+        <Button Grid.Row="10" Grid.Column="3"
+                Margin="5" Padding="5"
+                x:Name="SendTestEmailNowBtn"
+                Click="SendTestEmailNowBtn_OnClick">
+            Test Email
+        </Button>
+
+
+        <Button Grid.Row="11" Grid.Column="2"
+                Margin="5" Padding="5"
+                x:Name="UploadBtn"
+                Click="UploadBtn_OnClick">
+            Drop List For Non Payment
+        </Button>
+
+    </Grid>
+</Window>
