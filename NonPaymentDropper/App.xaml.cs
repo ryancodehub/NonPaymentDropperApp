@@ -46,7 +46,7 @@ namespace NonPaymentDropper
 
 
             isDevMode = bool.Parse(System.Configuration.ConfigurationManager.AppSettings["DeveloperMode"] ?? throw new InvalidOperationException());
-            var connectionStringName = isDevMode ? "Campus6_test" : "Campus6";
+            var connectionStringName = isDevMode ? "MainDB_test" : "MainDB";
             var connectionString = System.Configuration.ConfigurationManager.ConnectionStrings[connectionStringName]?.ConnectionString ?? throw new InvalidOperationException();
 
             var appUniqueId = System.Configuration.ConfigurationManager.AppSettings["AppUniqueId"]
@@ -58,9 +58,9 @@ namespace NonPaymentDropper
             var inMemorySettings = new Dictionary<string, string>
             {
 
-                { "ConnectionStrings:Campus6", connectionString },
+                { "ConnectionStrings:MainDB", connectionString },
                 { "ConnectionStrings:InHouse", System.Configuration.ConfigurationManager.ConnectionStrings["InHouse"].ConnectionString },
-                { "ConnectionStrings:Campus6_test", System.Configuration.ConfigurationManager.ConnectionStrings["Campus6_test"].ConnectionString },
+                { "ConnectionStrings:MainDB_test", System.Configuration.ConfigurationManager.ConnectionStrings["MainDB_test"].ConnectionString },
                 { "AppSettings:AppUniqueId", appUniqueId },
                 { "AppSettings:EmailCategoryId", emailCategory }
             };
@@ -70,8 +70,8 @@ namespace NonPaymentDropper
 
             IConfiguration config = builder.Build();
 
-            var domain = "LSUA";
-            var container = "DC=LSUA,DC=EDU";
+            var domain = "Domain";
+            var container = "DC=Domain,DC=org";
 
             services.AddSingleton<IAuthentication>(provider => new LdapAuthentication(domain, container));
 
